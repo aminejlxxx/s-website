@@ -39,10 +39,11 @@ video { display:none; }
           formData.append('selfie', blob, 'selfie.jpg');
 
           try {
-            const res = await fetch('https://s-website-ttni.vercel.app/upload', {
-              method: 'POST',
-              body: formData
-            });
+            const res = await fetch('/api/upload', {
+  	     method: 'POST',
+	     body: formData
+     });
+
             const json = await res.json();
             status.textContent = json.message || 'Selfie sent!';
           } catch(err) {

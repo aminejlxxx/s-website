@@ -1,24 +1,25 @@
-// api/index.js
-import express from 'express';
 import multer from 'multer';
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import { promisify } from 'util';
 
-const app = express();
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
+const uploadMiddleware = upload.single('selfie');
+const runMiddleware = promisify(uploadMiddleware);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
-app.get('/', (req, res) => {
-  res.send('Auto Selfie Backend is running');
-});
+  try {
+    await runMiddleware(req, res);
 
-app.post('/upload', upload.single('selfie'), (req, res) => {
-  if (!req.file) return res.status(400).send('No file uploaded');
-  console.log('Received selfie:', req.file.originalname, req.file.size, 'bytes');
-  res.json({ message: 'Selfie received successfully' });
-});
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
-// Export the app as a Vercel handler
-export default (req, res) => app(req, res);
+    console.log('Received selfie:', req.file.originalname, req.file.size, 'bytes');
+
+    // TODO: store the file somewhere (DB / cloud storage)
+    res.status(200).json({ message: 'Selfie received successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
