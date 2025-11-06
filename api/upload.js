@@ -1,23 +1,20 @@
 import multer from "multer";
-import nextConnect from "next-connect";
 
-const upload = multer({ storage: multer.memoryStorage() });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-const apiRoute = nextConnect();
+export const config = { api: { bodyParser: false } };
 
-apiRoute.use(upload.single("selfie"));
+export default async function handler(req, res) {
+  if (req.method === "POST") {
+    await new Promise((resolve, reject) =>
+      upload.single("selfie")(req, res, (err) => (err ? reject(err) : resolve()))
+    );
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-apiRoute.post((req, res) => {
-  if (!req.file) return res.status(400).send("No file uploaded");
-
-  console.log("Received selfie:", req.file.originalname, req.file.size, "bytes");
-  res.json({ message: "Selfie received successfully" });
-});
-
-export const config = {
-  api: {
-    bodyParser: false, // Important: multer handles parsing
-  },
-};
-
-export default apiRoute;
+    console.log("Received file:", req.file.originalname, req.file.size);
+    res.status(200).json({ message: "Selfie received successfully" });
+  } else {
+    res.status(405).json({ error: "Method not allowed" });
+  }
+}
