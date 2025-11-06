@@ -1,37 +1,31 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Storage config for multer
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = path.join(__dirname, 'uploads');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    const timestamp = Date.now();
-    const ext = path.extname(file.originalname);
-    cb(null, `selfie-${timestamp}${ext}`);
-  }
-});
-
+// Multer 2.x memory storage
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Serve your frontend (place your HTML file in 'public')
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Endpoint to receive selfies
+// Simple route to test server
+app.get('/', (req, res) => {
+res.send('Auto Selfie Backend is running');
+});
+
+// Upload route
 app.post('/upload', upload.single('selfie'), (req, res) => {
-  console.log('Selfie received:', req.file.filename);
-  res.json({ status: 'success', filename: req.file.filename });
+if (!req.file) return res.status(400).send('No file uploaded');
+
+// req.file.buffer contains the image bytes
+console.log('Received selfie:', req.file.originalname, req.file.size, 'bytes');
+
+// For now, just respond OK (you could send it to cloud storage)
+res.json({ message: 'Selfie received successfully' });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start server locally (for testing)
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`Server listening on port ${port}`));
