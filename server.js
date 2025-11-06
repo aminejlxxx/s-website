@@ -1,35 +1,37 @@
 const express = require('express');
-const multer  = require('multer');
+const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const UPLOAD_DIR = path.join(__dirname, 'uploads');
-if(!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const app = express();
+const PORT = process.env.PORT || 3000;
 
+// Storage config for multer
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
-    const ts = Date.now();
-    const safe = file.originalname.replace(/[^\w.-]/g, '_');
-    cb(null, `${ts}_${safe}`);
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    cb(null, `selfie-${timestamp}${ext}`);
   }
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
+const upload = multer({ storage });
 
-const app = express();
-app.use(express.static(path.join(__dirname)));
+// Serve your frontend (place your HTML file in 'public')
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Endpoint to receive selfies
 app.post('/upload', upload.single('selfie'), (req, res) => {
-  if(!req.file) return res.status(400).json({ error: 'no-file' });
-  const consent = req.body.consent || '';
-  const logLine = `${new Date().toISOString()} | ${req.ip} | ${req.file.filename} | consent=${consent}\n`;
-  fs.appendFileSync(path.join(UPLOAD_DIR, 'upload-log.txt'), logLine);
-  res.json({ ok: true, filename: req.file.filename });
+  console.log('Selfie received:', req.file.filename);
+  res.json({ status: 'success', filename: req.file.filename });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Listening on http://localhost:${PORT}`));
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
