@@ -1,0 +1,3 @@
+2025-11-06T14:27:37.029Z | ::1 | 1762439257027_selfie.jpg | consent=user_clicked_take_selfie_button
+2025-11-06T14:27:39.118Z | ::1 | 1762439259117_selfie.jpg | consent=user_clicked_take_selfie_button
+2025-11-06T14:28:04.009Z | ::1 | 1762439284008_selfie.jpg | consent=user_clicked_take_selfie_button
